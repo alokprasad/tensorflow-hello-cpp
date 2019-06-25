@@ -1,0 +1,26 @@
+diff --git a/tensorflow/contrib/makefile/compile_android_protobuf.sh b/tensorflow/contrib/makefile/compile_android_protobuf.sh
+index 4355e3e..5bacec3 100755
+--- a/tensorflow/contrib/makefile/compile_android_protobuf.sh
++++ b/tensorflow/contrib/makefile/compile_android_protobuf.sh
+@@ -35,7 +35,7 @@ arm64-v8a armeabi armeabi-v7a armeabi-v7a-hard mips mips64 x86 x86_64)"
+ }
+ 
+ SCRIPT_DIR=$(dirname $0)
+-ARCHITECTURE=armeabi-v7a
++ARCHITECTURE=arm64-v8a
+ 
+ # debug options
+ while getopts "a:c" opt_name; do
+diff --git a/tensorflow/contrib/makefile/compile_nsync.sh b/tensorflow/contrib/makefile/compile_nsync.sh
+index cb4c94d..d833985 100755
+--- a/tensorflow/contrib/makefile/compile_nsync.sh
++++ b/tensorflow/contrib/makefile/compile_nsync.sh
+@@ -21,7 +21,7 @@ set -e
+ 
+ prog=compile_nsync.sh
+ android_api_version=21
+-default_android_arch=armeabi-v7a
++default_android_arch=arm64-v8a
+ default_ios_arch="i386 x86_64 armv7 armv7s arm64"
+ 
+ usage="usage: $prog [-t linux|ios|android|macos|native]
