@@ -1,0 +1,83 @@
+diff --git a/tensorflow/contrib/android/cmake/CMakeLists.txt b/tensorflow/contrib/android/cmake/CMakeLists.txt
+index ecf1a10..e4a962a 100644
+--- a/tensorflow/contrib/android/cmake/CMakeLists.txt
++++ b/tensorflow/contrib/android/cmake/CMakeLists.txt
+@@ -36,7 +36,7 @@ set_target_properties(lib_tf PROPERTIES IMPORTED_LOCATION
+ # Change to compile flags should be replicated into bazel build file
+ # TODO: Consider options other than -O2 for binary size.
+ #       e.g. -Os for gcc, and -Oz for clang.
+-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DIS_SLIM_BUILD \
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -D__ANDROID_TYPES_FULL__ \
+                      -std=c++11 -fno-rtti -fno-exceptions \
+                      -O2 -Wno-narrowing -fomit-frame-pointer \
+                      -mfpu=neon -mfloat-abi=softfp -fPIE -fPIC \
+diff --git a/tensorflow/contrib/makefile/Makefile b/tensorflow/contrib/makefile/Makefile
+index 36125c1..3d9fccf 100644
+--- a/tensorflow/contrib/makefile/Makefile
++++ b/tensorflow/contrib/makefile/Makefile
+@@ -48,7 +48,8 @@ endif # HEXAGON_LIBS
+ 
+ # If ANDROID_TYPES is not set assume __ANDROID_TYPES_SLIM__
+ ifeq ($(ANDROID_TYPES),)
+-	ANDROID_TYPES := -D__ANDROID_TYPES_SLIM__
++	#ANDROID_TYPES := -D__ANDROID_TYPES_SLIM__
++	ANDROID_TYPES := -D__ANDROID_TYPES_FULL__
+ endif
+ 
+ # Try to figure out the host system
+@@ -185,7 +186,7 @@ ifneq ($(TARGET),ANDROID)
+   OPTFLAGS += -march=native
+ endif
+ 
+-CXXFLAGS := --std=c++11 -DIS_SLIM_BUILD -fno-exceptions -DNDEBUG $(OPTFLAGS)
++CXXFLAGS := --std=c++11 -fno-exceptions -D__ANDROID_TYPES_FULL__ -DNDEBUG $(OPTFLAGS)
+ LDFLAGS := \
+ -L/usr/local/lib
+ DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+@@ -408,7 +409,6 @@ $(MARCH_OPTION) \
+ 		NVCC := $(JETPACK)/cuda/bin/nvcc
+ 		NVCCFLAGS := -x=cu -D__CUDACC__ -DNVCC -DANDROID_TEGRA -ccbin $(NDK_ROOT)/toolchains/$(TOOLCHAIN)/prebuilt/$(ANDROID_HOST_OS_ARCH)/bin/$(BIN_PREFIX)-g++ --std c++11 --expt-relaxed-constexpr -m64 -gencode arch=compute_53,\"code=sm_53\" -gencode arch=compute_62,\"code=sm_62\" -DEIGEN_AVOID_STL_ARRAY -DTENSORFLOW_USE_EIGEN_THREADPOOL -DLANG_CXX11 -DEIGEN_HAS_C99_MATH -DGOOGLE_CUDA=1 -DTF_EXTRA_CUDA_CAPABILITIES=5.3
+ 		CXXFLAGS4NVCC =\
+--DIS_SLIM_BUILD \
+ -DANDROID_TEGRA \
+ -fno-exceptions \
+ -DNDEBUG $(OPTFLAGS) \
+diff --git a/tensorflow/contrib/makefile/compile_android_protobuf.sh b/tensorflow/contrib/makefile/compile_android_protobuf.sh
+index 4355e3e..5bacec3 100755
+--- a/tensorflow/contrib/makefile/compile_android_protobuf.sh
++++ b/tensorflow/contrib/makefile/compile_android_protobuf.sh
+@@ -35,7 +35,7 @@ arm64-v8a armeabi armeabi-v7a armeabi-v7a-hard mips mips64 x86 x86_64)"
+ }
+ 
+ SCRIPT_DIR=$(dirname $0)
+-ARCHITECTURE=armeabi-v7a
++ARCHITECTURE=arm64-v8a
+ 
+ # debug options
+ while getopts "a:c" opt_name; do
+diff --git a/tensorflow/contrib/makefile/compile_nsync.sh b/tensorflow/contrib/makefile/compile_nsync.sh
+index cb4c94d..d833985 100755
+--- a/tensorflow/contrib/makefile/compile_nsync.sh
++++ b/tensorflow/contrib/makefile/compile_nsync.sh
+@@ -21,7 +21,7 @@ set -e
+ 
+ prog=compile_nsync.sh
+ android_api_version=21
+-default_android_arch=armeabi-v7a
++default_android_arch=arm64-v8a
+ default_ios_arch="i386 x86_64 armv7 armv7s arm64"
+ 
+ usage="usage: $prog [-t linux|ios|android|macos|native]
+diff --git a/tensorflow/core/platform/platform.h b/tensorflow/core/platform/platform.h
+index 0481b36..1af7984 100644
+--- a/tensorflow/core/platform/platform.h
++++ b/tensorflow/core/platform/platform.h
+@@ -26,7 +26,7 @@ limitations under the License.
+ // Choose which platform we are on.
+ #if defined(ANDROID) || defined(__ANDROID__)
+ #define PLATFORM_POSIX_ANDROID
+-#define IS_MOBILE_PLATFORM
++//#define IS_MOBILE_PLATFORM
+ 
+ #elif defined(__APPLE__)
+ #define PLATFORM_POSIX

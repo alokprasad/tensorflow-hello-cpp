@@ -1,0 +1,106 @@
+diff --git a/WORKSPACE b/WORKSPACE
+index eb6f26b..45bbc76 100644
+--- a/WORKSPACE
++++ b/WORKSPACE
+@@ -67,3 +67,7 @@ new_http_archive(
+         "http://download.tensorflow.org/models/stylize_v1.zip",
+     ],
+ )
++android_ndk_repository(
++    name="androidndk",
++    path="/data/alok/tensorflow-android/target/android-ndk-r12b",
++    api_level=14)
+diff --git a/tensorflow/contrib/android/BUILD b/tensorflow/contrib/android/BUILD
+index 952f24f..976e6a7 100644
+--- a/tensorflow/contrib/android/BUILD
++++ b/tensorflow/contrib/android/BUILD
+@@ -98,3 +98,39 @@ cc_binary(
+         LINKER_SCRIPT,
+     ],
+ )
++
++
++cc_binary(
++    name = "libtensorflow_cc.so",
++    srcs = [],
++    copts = tf_copts() + [
++        "-ffunction-sections",
++        "-fdata-sections",
++        "-shared",
++    ],
++    linkopts = if_android([
++        "-landroid",
++        "-llog",
++        "-lm",
++        "-z defs",
++        "-s",
++        "-Wl,--gc-sections",
++        # soname is required for the so to load on api > 22
++        "-Wl,-soname=libtensorflow_cc.so",
++        "-Wl,--version-script",
++        "//tensorflow/c:version_script.lds",
++    ]),
++    linkshared = 1,
++    linkstatic = 1,
++    tags = [
++        "manual",
++        "notap",
++    ],
++    deps = [
++        "//tensorflow/c:c_api",
++        "//tensorflow/c:version_script.lds",
++        "//tensorflow/core:android_tensorflow_lib",
++    ],
++)
++
++
+diff --git a/tensorflow/contrib/makefile/Makefile b/tensorflow/contrib/makefile/Makefile
+index 2150cfe..4ca0e36 100644
+--- a/tensorflow/contrib/makefile/Makefile
++++ b/tensorflow/contrib/makefile/Makefile
+@@ -236,7 +236,7 @@ ifeq ($(TARGET),ANDROID)
+ 	CXXFLAGS +=\
+ --sysroot $(NDK_ROOT)/platforms/android-21/arch-arm \
+ -Wno-narrowing \
+--march=armv7-a \
++-march=aarch64-v8a \
+ -mfloat-abi=softfp \
+ -mfpu=neon \
+ -fPIE
+diff --git a/tensorflow/contrib/makefile/build_all_linux.sh b/tensorflow/contrib/makefile/build_all_linux.sh
+index 6bf1c6d..49d5d71 100755
+--- a/tensorflow/contrib/makefile/build_all_linux.sh
++++ b/tensorflow/contrib/makefile/build_all_linux.sh
+@@ -37,5 +37,5 @@ tensorflow/contrib/makefile/compile_linux_protobuf.sh
+ 
+ # Build TensorFlow.
+ make -j"${JOB_COUNT}" -f tensorflow/contrib/makefile/Makefile \
+-  OPTFLAGS="-O3 -march=native" \
+-  HOST_CXXFLAGS="--std=c++11 -march=native"
++  OPTFLAGS="-O3 -march=aarch64-v8a" \
++  HOST_CXXFLAGS="--std=c++11 -march=aarch64-v8a"
+diff --git a/tensorflow/contrib/makefile/compile_android_protobuf.sh b/tensorflow/contrib/makefile/compile_android_protobuf.sh
+index fadbe27..c493f83 100755
+--- a/tensorflow/contrib/makefile/compile_android_protobuf.sh
++++ b/tensorflow/contrib/makefile/compile_android_protobuf.sh
+@@ -35,7 +35,7 @@ arm64-v8a armeabi armeabi-v7a armeabi-v7a-hard mips mips64 x86 x86_64)"
+ }
+ 
+ SCRIPT_DIR=$(dirname $0)
+-ARCHITECTURE=armeabi-v7a
++ARCHITECTURE=arm64-v8a
+ 
+ # debug options
+ while getopts "a:c" opt_name; do
+diff --git a/tensorflow/core/kernels/BUILD b/tensorflow/core/kernels/BUILD
+index 0c862c7..8643efd 100644
+--- a/tensorflow/core/kernels/BUILD
++++ b/tensorflow/core/kernels/BUILD
+@@ -4230,6 +4230,7 @@ filegroup(
+         "cwise_op_exp.cc",
+         "cwise_op_floor.cc",
+         "cwise_op_floor_div.cc",
++        "cwise_op_floor_mod.cc",
+         "cwise_op_greater.cc",
+         "cwise_op_greater_equal.cc",
+         "cwise_op_invert.cc",

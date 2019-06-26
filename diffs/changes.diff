@@ -1,0 +1,337 @@
+diff --git a/WORKSPACE b/WORKSPACE
+index 7057d3f..8d359de 100644
+--- a/WORKSPACE
++++ b/WORKSPACE
+@@ -106,3 +106,7 @@ http_archive(
+     ],
+ )
+ 
++android_ndk_repository(
++    name="androidndk",
++    path="/data/alok/tensorflow-android/target/android-ndk-r18",
++    api_level=28)
+diff --git a/tensorflow/BUILD b/tensorflow/BUILD
+index 823ad8f..f4e316d 100644
+--- a/tensorflow/BUILD
++++ b/tensorflow/BUILD
+@@ -505,7 +505,7 @@ tf_cc_shared_object(
+         "//tensorflow:tf_exported_symbols.lds",
+         "//tensorflow:tf_version_script.lds",
+         "//tensorflow/c:c_api",
+-        "//tensorflow/c/eager:c_api",
++        #"//tensorflow/c/eager:c_api",
+         "//tensorflow/cc:cc_ops",
+         "//tensorflow/cc:client_session",
+         "//tensorflow/cc:scope",
+diff --git a/tensorflow/cc/BUILD b/tensorflow/cc/BUILD
+index a09becc..06f0f25 100644
+--- a/tensorflow/cc/BUILD
++++ b/tensorflow/cc/BUILD
+@@ -668,15 +668,16 @@ tf_cc_binary(
+         "//tensorflow:windows": [],
+         "//tensorflow:darwin": [
+             "-lm",
+-            "-lpthread",
++            #"-lpthread",
+         ],
+         "//tensorflow:ios": [
+             "-lm",
+-            "-lpthread",
++            #"-lpthread",
+         ],
+         "//conditions:default": [
+             "-lm",
+-            "-lpthread",
++            "-llog",
++            #"-lpthread",
+             "-lrt",
+         ],
+     }),
+diff --git a/tensorflow/contrib/android/BUILD b/tensorflow/contrib/android/BUILD
+index f0b1c92..13468fb 100644
+--- a/tensorflow/contrib/android/BUILD
++++ b/tensorflow/contrib/android/BUILD
+@@ -88,3 +88,34 @@ cc_binary(
+         LINKER_SCRIPT,
+     ],
+ )
++cc_binary(
++    name = "libtensorflow_cc.so",
++    srcs = [],
++    copts = tf_copts() + [
++        "-ffunction-sections",
++        "-fdata-sections",
++    ],
++    linkopts = ([
++        "-landroid",
++        "-llog",
++        "-lm",
++        "-z defs",
++        "-s",
++        "-Wl,--gc-sections",
++	# soname is required for the so to load on api > 22
++        "-Wl,-soname=libtensorflow_cc.so",
++        "-Wl,--version-script",
++        "//tensorflow/c:version_script.lds",
++    ]),
++    linkshared = 1,
++    linkstatic = 1,
++    tags = [
++        "manual",
++        "notap",
++    ],
++    deps = [
++        "//tensorflow/c:c_api",
++        "//tensorflow/c:version_script.lds",
++        "//tensorflow/core:android_tensorflow_lib",
++    ],
++)
+diff --git a/tensorflow/contrib/makefile/Makefile b/tensorflow/contrib/makefile/Makefile
+index 7ea6e34..00cf64f 100644
+--- a/tensorflow/contrib/makefile/Makefile
++++ b/tensorflow/contrib/makefile/Makefile
+@@ -103,18 +103,18 @@ HOST_LIBS := \
+ $(HOST_NSYNC_LIB) \
+ -lstdc++ \
+ -lprotobuf \
+--lpthread \
+ -lm \
++-llog \
+ -lz
+ 
+ # If we're on Linux, also link in the dl library.
+ ifeq ($(HOST_OS),LINUX)
+-	HOST_LIBS += -ldl -lpthread
++	HOST_LIBS += -ldl 
+ endif
+ 
+ # If we're on a Pi, link in pthreads and dl
+ ifeq ($(HOST_OS),PI)
+-	HOST_LIBS += -ldl -lpthread
++	HOST_LIBS += -ldl
+ endif
+ 
+ # Abseil sources.
+@@ -259,13 +259,13 @@ endif
+ endif
+ # If we're on Linux, also link in the dl library.
+ ifeq ($(TARGET),LINUX)
+-	LIBS += -ldl -lpthread
++	LIBS += -ldl 
+ endif
+ # If we're cross-compiling for the Raspberry Pi, use the right gcc.
+ ifeq ($(TARGET),PI)
+ 	CXXFLAGS += $(ANDROID_TYPES) -DRASPBERRY_PI
+ 	LDFLAGS := -Wl,--no-whole-archive
+-	LIBS += -ldl -lpthread
++	LIBS += -ldl 
+ 	LIBFLAGS += -Wl,--allow-multiple-definition -Wl,--whole-archive
+ endif
+ 
+diff --git a/tensorflow/contrib/pi_examples/label_image/Makefile b/tensorflow/contrib/pi_examples/label_image/Makefile
+index 9d054a3..cd8a143 100644
+--- a/tensorflow/contrib/pi_examples/label_image/Makefile
++++ b/tensorflow/contrib/pi_examples/label_image/Makefile
+@@ -50,7 +50,6 @@ LIBS := \
+ -lstdc++ \
+ -lprotobuf \
+ -ldl \
+--lpthread \
+ -lm \
+ -ljpeg \
+ -lz
+diff --git a/tensorflow/core/BUILD b/tensorflow/core/BUILD
+index f98280c..04e446c 100644
+--- a/tensorflow/core/BUILD
++++ b/tensorflow/core/BUILD
+@@ -2189,7 +2189,7 @@ cc_library(
+         "//tensorflow:android": [],
+         "//conditions:default": [
+             "-ldl",
+-            "-lpthread",
++            #"-lpthread",
+         ],
+     }),
+     deps = tf_additional_lib_deps() + [
+diff --git a/tensorflow/core/kernels/concat_lib_cpu.cc b/tensorflow/core/kernels/concat_lib_cpu.cc
+index 547a7b4..04436da 100644
+--- a/tensorflow/core/kernels/concat_lib_cpu.cc
++++ b/tensorflow/core/kernels/concat_lib_cpu.cc
+@@ -73,6 +73,7 @@ REGISTER(qint8)
+ REGISTER(quint16)
+ REGISTER(qint16)
+ REGISTER(qint32)
++REGISTER(tensorflow::bfloat16)
+ 
+ #if defined(IS_MOBILE_PLATFORM) && !defined(SUPPORT_SELECTIVE_REGISTRATION) && \
+     !defined(__ANDROID_TYPES_FULL__)
+diff --git a/tensorflow/core/platform/platform.h b/tensorflow/core/platform/platform.h
+index 0481b36..1af7984 100644
+--- a/tensorflow/core/platform/platform.h
++++ b/tensorflow/core/platform/platform.h
+@@ -26,7 +26,7 @@ limitations under the License.
+ // Choose which platform we are on.
+ #if defined(ANDROID) || defined(__ANDROID__)
+ #define PLATFORM_POSIX_ANDROID
+-#define IS_MOBILE_PLATFORM
++//#define IS_MOBILE_PLATFORM
+ 
+ #elif defined(__APPLE__)
+ #define PLATFORM_POSIX
+diff --git a/tensorflow/core/platform/posix/env_time.cc b/tensorflow/core/platform/posix/env_time.cc
+index 59a67b1..05c5e05 100644
+--- a/tensorflow/core/platform/posix/env_time.cc
++++ b/tensorflow/core/platform/posix/env_time.cc
+@@ -36,7 +36,8 @@ class PosixEnvTime : public EnvTime {
+ 
+ }  // namespace
+ 
+-#if defined(PLATFORM_POSIX) || defined(__ANDROID__)
++//#if defined(PLATFORM_POSIX) || defined(__ANDROID__)
++#if defined(PLATFORM_POSIX) 
+ EnvTime* EnvTime::Default() {
+   static EnvTime* default_env_time = new PosixEnvTime;
+   return default_env_time;
+diff --git a/tensorflow/lite/tools/make/Makefile b/tensorflow/lite/tools/make/Makefile
+index 994f660..caacb81 100644
+--- a/tensorflow/lite/tools/make/Makefile
++++ b/tensorflow/lite/tools/make/Makefile
+@@ -44,10 +44,11 @@ INCLUDES += -I/usr/local/include
+ # overridden by the platform-specific settings in target makefiles.
+ LIBS := \
+ -lstdc++ \
+--lpthread \
+ -lm \
++-llog \
+ -lz
+ 
++
+ # There are no rules for compiling objects for the host system (since we don't
+ # generate things like the protobuf compiler that require that), so all of
+ # these settings are for the target compiler.
+diff --git a/tensorflow/tensorflow.bzl b/tensorflow/tensorflow.bzl
+index d93e0df..6b0c1be 100644
+--- a/tensorflow/tensorflow.bzl
++++ b/tensorflow/tensorflow.bzl
+@@ -763,7 +763,7 @@ def tf_cc_test(
+                 "-lm",
+             ],
+             "//conditions:default": [
+-                "-lpthread",
++                #"-lpthread",
+                 "-lm",
+             ],
+         }) + linkopts + _rpath_linkopts(name),
+@@ -899,7 +899,7 @@ def tf_cuda_only_cc_test(
+         ]) + if_rocm_is_configured([
+             clean_dep("//tensorflow/core:gpu_lib"),
+         ]),
+-        linkopts = if_not_windows(["-lpthread", "-lm"]) + linkopts + _rpath_linkopts(name),
++        linkopts = if_not_windows(["-lm"]) + linkopts + _rpath_linkopts(name),
+         linkstatic = linkstatic or select({
+             # cc_tests with ".so"s in srcs incorrectly link on Darwin
+             # unless linkstatic=1.
+@@ -965,7 +965,7 @@ def tf_cc_test_mkl(
+                 ],
+                 clean_dep("//tensorflow:windows"): [],
+                 "//conditions:default": [
+-                    "-lpthread",
++                    #"-lpthread",
+                     "-lm",
+                 ],
+             }) + _rpath_linkopts(src_to_test_name(src)),
+diff --git a/tensorflow/tools/proto_text/BUILD b/tensorflow/tools/proto_text/BUILD
+index b4b70e0..cf1e9a3 100644
+--- a/tensorflow/tools/proto_text/BUILD
++++ b/tensorflow/tools/proto_text/BUILD
+@@ -52,15 +52,15 @@ cc_library(
+         "//tensorflow:windows": [],
+         "//tensorflow:darwin": [
+             "-lm",
+-            "-lpthread",
++            #"-lpthread",
+         ],
+         "//tensorflow:ios": [
+             "-lm",
+-            "-lpthread",
++            #"-lpthread",
+         ],
+         "//conditions:default": [
+             "-lm",
+-            "-lpthread",
++            #"-lpthread",
+             "-lrt",
+         ],
+     }),
+diff --git a/third_party/kafka/BUILD b/third_party/kafka/BUILD
+index 11ec500..9e36f88 100644
+--- a/third_party/kafka/BUILD
++++ b/third_party/kafka/BUILD
+@@ -170,7 +170,7 @@ cc_library(
+     ],
+     linkopts = select({
+         "@org_tensorflow//tensorflow:windows": ["-defaultlib:crypt32.lib"],
+-        "//conditions:default": ["-lpthread"],
++        "//conditions:default": [],
+     }),
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git a/third_party/llvm/llvm.bzl b/third_party/llvm/llvm.bzl
+index 5a977f8..d83a681 100644
+--- a/third_party/llvm/llvm.bzl
++++ b/third_party/llvm/llvm.bzl
+@@ -326,7 +326,7 @@ llvm_all_cmake_vars = select({
+ 
+ llvm_linkopts = select({
+     "@org_tensorflow//tensorflow:windows": [],
+-    "//conditions:default": ["-ldl", "-lm", "-lpthread"],
++    "//conditions:default": ["-ldl", "-lm"],
+ })
+ 
+ llvm_defines = select({
+diff --git a/third_party/lmdb.BUILD b/third_party/lmdb.BUILD
+index f36a698..771ba98 100644
+--- a/third_party/lmdb.BUILD
++++ b/third_party/lmdb.BUILD
+@@ -20,12 +20,26 @@ cc_library(
+     ],
+     linkopts = select({
+         ":windows": ["-DEFAULTLIB:advapi32.lib"],  # InitializeSecurityDescriptor, SetSecurityDescriptorDacl
+-        "//conditions:default": ["-lpthread"],
++        "//conditions:default": [],
+     }),
+     visibility = ["//visibility:public"],
++
++   defines = select({
++        ":android": [
++	"MDB_USE_ROBUST=0",
++	],
++	"//conditions:default": [],
++	}),
+ )
+ 
+ config_setting(
+     name = "windows",
+     values = {"cpu": "x64_windows"},
+ )
++
++config_setting(
++name = "android",
++values = {"crosstool_top": "//external:android/crosstool"},
++)
++
++
+diff --git a/third_party/sqlite.BUILD b/third_party/sqlite.BUILD
+index 8b876fb..9c60be6 100644
+--- a/third_party/sqlite.BUILD
++++ b/third_party/sqlite.BUILD
+@@ -49,7 +49,8 @@ cc_library(
+         "@org_tensorflow//tensorflow:windows": [],
+         "//conditions:default": [
+             "-ldl",
+-            "-lpthread",
++            #"-lpthread",
++            "-llog",
+         ],
+     }),
+     visibility = ["//visibility:public"],
