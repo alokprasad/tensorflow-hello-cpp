@@ -59,6 +59,29 @@ cd build
 ./hello-tf_inference 
 
 
+## ldd hello-tf-inference dyanmic build
+	linux-vdso.so.1 (0x00007ffdcd3c9000)
+	libtensorflow_cc.so => /media/alok/ws/experiments/tensorflow-1.13.1/bazel-bin/tensorflow/libtensorflow_cc.so (0x00007f5988c9a000)
+	libtensorflow_framework.so => /media/alok/ws/experiments/tensorflow-1.13.1/bazel-bin/tensorflow/libtensorflow_framework.so (0x00007f5987cee000)
+	libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f5987965000)
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f598774d000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f598735c000)
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f5987158000)
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f5986f39000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f5986b9b000)
+	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007f5986993000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f5993980000)
+
+## ldd hello-tf-inference static build
+   	linux-vdso.so.1 (0x00007ffd91f8e000)
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007f8d9026a000)
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007f8d90066000)
+	libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007f8d8fcdd000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007f8d8f93f000)
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f8d8f727000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f8d8f336000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f8d969f6000)
+  
 ## Reference 
 
 https://ce39906.github.io/2018/09/11/Tensorflow-%E7%BC%96%E8%AF%91%E5%8F%8A%E5%BA%94%E7%94%A8C-%E9%9D%99%E6%80%81%E5%BA%93/

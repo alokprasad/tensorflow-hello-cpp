@@ -1,30 +1,3 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-SET(TF_DIR /media/alok/ws/experiments/tensorflow-android/tensorflow)
-SET(TENSORFLOW_MAKEFILE_DIR ${TF_DIR}/tensorflow/contrib/makefile)
-
-SET(NSYNC_LIB ${TENSORFLOW_MAKEFILE_DIR}/downloads/nsync/builds/default.linux.c++11/nsync.a)
-SET(PROTOBUF_LIB ${TENSORFLOW_MAKEFILE_DIR}/gen/protobuf/lib/libprotobuf.a)
-SET(TENSORFLOW_CORE_LIB -Wl,--whole-archive ${TF_DIR}/tensorflow/contrib/makefile/gen/lib/libtensorflow-core.a -Wl,--no-whole-archive)
-
-
-INCLUDE_DIRECTORIES(${TF_DIR})
-INCLUDE_DIRECTORIES(${TF_DIR}/tensorflow/contrib/makefile/gen/proto)
-INCLUDE_DIRECTORIES(${TF_DIR}/tensorflow/contrib/makefile/downloads/eigen)
-INCLUDE_DIRECTORIES(${TF_DIR}/tensorflow/contrib/makefile/downloads/absl)
-INCLUDE_DIRECTORIES(${TF_DIR}/tensorflow/contrib/makefile/downloads/nsync/public)
-INCLUDE_DIRECTORIES(${TF_DIR}/tensorflow/contrib/makefile/gen/protobuf/include)
-
-ADD_EXECUTABLE(hello-tf-inference src/hello-tf-inference.cc)
-SET(TF_LIBRARIES
-    ${TENSORFLOW_CORE_LIB}
-    ${NSYNC_LIB}
-    ${PROTOBUF_LIB} 
-    pthread 
-    dl
-)
-
-SET(LDFLAGS "-std=c++11 -msse4.1 -fPIC -O3 -march=native -Wall -finline-functions")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}${LDFLAGS}")
-MESSAGE(STATUS "CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}")
-MESSAGE(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
-TARGET_LINK_LIBRARIES(hello-tf-inference ${TF_LIBRARIES} ${CMAKE_CXX_FLAGS})
+#include(CMakeLists-dynamic.txt)
+include(CMakeLists-static.txt)
