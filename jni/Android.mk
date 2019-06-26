@@ -1,9 +1,6 @@
-#CAL_PATH := $(call my-dir)
+include $(CLEAR_VARS)
 LOCAL_PATH := $(call my-dir)
 TF_DIR := /data/alok/tensorflow-android
-include $(CLEAR_VARS)
-#LOCAL_SRC_FILES := hello-tf.cc
-
 LOCAL_CLAGS := -std=c++11  -llog -fno-rtti  -Wall -Wc++11-extensions# whatever g++ flags you like
 LOCAL_CPPFLAGS := -std=c++11  -llog -fno-rtti  -Wall -Wc++11-extensions# whatever g++ flags you like
 LOCAL_LDLIBS := -L/data/alok/tensorflow-android/target/android-ndk-r15/sysroot/usr/lib -llog -fPIE -pie # whatever ld flags you like
@@ -16,7 +13,7 @@ include $(PREBUILT_STATIC_LIBRARY)
 
 #include $(CLEAR_VARS)
 LOCAL_MODULE := nsync
-LOCAL_SRC_FILES := /data/alok/tensorflow-android/target/tensorflow/tensorflow/contrib/makefile/downloads/nsync/builds/arm64-v8a.android.c++11/nsync.a
+LOCAL_SRC_FILES := /data/alok/tensorflow-android/target/tensorflow/tensorflow/contrib/makefile/downloads/nsync/builds/arm64-v8a.android.c++11/libnsync.a
 include $(PREBUILT_STATIC_LIBRARY)
 
 LOCAL_MODULE := protobuf
@@ -27,7 +24,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := hello-tf
 LOCAL_CFLAGS   += -DANDROID26
 APP_OPTIM := debug
-LOCAL_SRC_FILES :=  hello-tf.cc
+LOCAL_SRC_FILES :=  src/hello-tf-inference.cc
 LOCAL_WHOLE_STATIC_LIBRARIES := tensorflow-core
 LOCAL_STATIC_LIBRARIES := nsync protobuf
 LOCAL_C_INCLUDES := /data/alok/tensorflow-android/target/tensorflow \
