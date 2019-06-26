@@ -1,7 +1,8 @@
+#static Makefile, Please prefer to use CMakelists.txt version instead of Makefile
+
 TARGET_NAME := hello-tf-inference
 TF_DIR := /media/alok/ws/experiments/tensorflow-android/tensorflow
 TENSORFLOW_MAKEFILE_DIR := $(TF_DIR)/tensorflow/contrib/makefile
-
 
  INCLUDES := \
 -I $(TF_DIR) \
