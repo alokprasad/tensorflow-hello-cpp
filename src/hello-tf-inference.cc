@@ -9,7 +9,7 @@ const static std::string kModelPath = "../model/test_model.pb";
 //If you want to build full tensorflow then disable IS_MOBILE_PLATFORM , IS_SLIM_BUILD and enable __ANDROID_FULL_BUILD 
 //and make SLIM_ANDROID false , you have retrain the model to generate new graph also.
 
-#define SLIM_ANDROID false
+#define SLIM_BUILD false
 
 int main()
 {
