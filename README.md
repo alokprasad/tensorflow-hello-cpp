@@ -19,7 +19,7 @@ tensorflow/contrib/makefile/build_all_linux.sh
 
 ## Building for Android
 
-* Download Android ndk (tested on  ndk r19)
+* Download Android ndk (tested on  ndk r19) or 14b ??
 
 ```
 export NDK_ROOT=/absolute/path/to/NDK/android-ndk-rxxx/
